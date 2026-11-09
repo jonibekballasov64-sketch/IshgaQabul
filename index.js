@@ -17,6 +17,9 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 const ADMIN_KEY = process.env.ADMIN_KEY || 'ishgaqabul';
 const PORT = process.env.PORT || 3000;
 const WEBAPP_URL = process.env.WEBAPP_URL; // masalan: https://ishgaqabul-bot.up.railway.app/webapp/
+const ADMIN_PANEL_URL = WEBAPP_URL
+  ? `${WEBAPP_URL.replace(/\/webapp\/?$/, '')}/admin/?key=${encodeURIComponent(ADMIN_KEY)}`
+  : null;
 
 if (!BOT_TOKEN) {
   console.error("BOT_TOKEN topilmadi. .env faylga yoki Railway Variables ga qo'shing.");
@@ -29,6 +32,10 @@ const stage = new Scenes.Stage([mediaWizard]);
 bot.use(session());
 bot.use(stage.middleware());
 
+function isAdmin(ctx) {
+  return ADMIN_CHAT_ID && String(ctx.from.id) === String(ADMIN_CHAT_ID);
+}
+
 function startKeyboard() {
   if (WEBAPP_URL) {
     return Markup.inlineKeyboard([
@@ -38,7 +45,23 @@ function startKeyboard() {
   return undefined;
 }
 
+function adminKeyboard() {
+  if (ADMIN_PANEL_URL) {
+    return Markup.inlineKeyboard([
+      [Markup.button.url('📊 Admin panelni ochish', ADMIN_PANEL_URL)],
+    ]);
+  }
+  return undefined;
+}
+
 bot.start(async (ctx) => {
+  if (isAdmin(ctx)) {
+    await ctx.reply(
+      "Xush kelibsiz! Siz adminsiz — arizalarni ko'rish uchun admin panelni oching:",
+      adminKeyboard()
+    );
+    return;
+  }
   if (!WEBAPP_URL) {
     await ctx.reply(
       "Ariza formasi hali ulanmagan. Admin WEBAPP_URL o'zgaruvchisini sozlashi kerak."
@@ -53,6 +76,11 @@ bot.start(async (ctx) => {
 
 bot.command('ariza', async (ctx) => {
   await ctx.reply("Ariza formasini to'ldirish uchun tugmani bosing:", startKeyboard());
+});
+
+bot.command('admin', async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  await ctx.reply('Admin panel:', adminKeyboard());
 });
 
 // Web App dan matnli ariza ma'lumotlari keladi
