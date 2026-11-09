@@ -13,10 +13,17 @@
     color: var(--tg-theme-text-color, #111111);
     margin: 0;
     padding: 16px;
-    padding-bottom: 100px;
+    padding-bottom: 90px;
   }
   h2 { font-size: 18px; margin: 0 0 4px; }
   p.hint { color: var(--tg-theme-hint-color, #888); font-size: 13px; margin: 0 0 16px; }
+  .progress { display:flex; gap:4px; margin-bottom:18px; }
+  .progress .dot { flex:1; height:4px; border-radius:2px; background: var(--tg-theme-hint-color, #e2e2e2); }
+  .progress .dot.done { background: var(--tg-theme-button-color, #2481cc); }
+  .step { display: none; }
+  .step.active { display: block; animation: fadein .15s ease; }
+  @keyframes fadein { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  .step-title { font-size: 16px; font-weight: 700; margin: 0 0 14px; }
   .field { margin-bottom: 14px; }
   label { display: block; font-size: 14px; margin-bottom: 6px; font-weight: 600; }
   input, select, textarea {
@@ -33,11 +40,11 @@
   .radio-btn, .toggle-btn {
     flex: 1;
     text-align: center;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 14px 10px;
+    border-radius: 10px;
     border: 1px solid var(--tg-theme-hint-color, #ccc);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     user-select: none;
   }
   .radio-btn.active, .toggle-btn.active {
@@ -45,153 +52,177 @@
     color: var(--tg-theme-button-text-color, #fff);
     border-color: var(--tg-theme-button-color, #2481cc);
   }
-  .section-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 22px 0 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--tg-theme-hint-color, #eee);
-  }
   .hidden { display: none !important; }
-  .error { color: #d14343; font-size: 12px; margin-top: 4px; display: none; }
-  #submitBtn {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    padding: 14px;
-    background: var(--tg-theme-button-color, #2481cc);
-    color: var(--tg-theme-button-text-color, #fff);
-    border: none;
-    font-size: 16px;
-    font-weight: 600;
+  .error { color: #d14343; font-size: 12px; margin-top: 10px; display: none; }
+  .nav-btns { display:flex; gap:10px; margin-top: 20px; }
+  .nav-btns button {
+    flex:1; padding: 13px; border-radius: 8px; border: none; font-size: 15px; font-weight:600;
   }
+  .btn-primary { background: var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-text-color, #fff); }
+  .btn-secondary { background: var(--tg-theme-secondary-bg-color, #eee); color: var(--tg-theme-text-color, #111); }
+  .summary-row { display:flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+  .summary-row .k { color: var(--tg-theme-hint-color, #888); }
 </style>
 </head>
 <body>
-  <h2>Ishga qabul — ariza</h2>
-  <p class="hint">Barcha maydonlarni to'ldiring. Skrinshot, namunaviy video va testni esa botga alohida yuborasiz.</p>
+  <div class="progress" id="progress"></div>
 
   <form id="arizaForm">
-    <div class="section-title">Lavozim</div>
-    <div class="field">
+
+    <!-- Step 0: Lavozim -->
+    <div class="step active" data-step="0">
+      <div class="step-title">Qaysi lavozimga ariza topshirmoqchisiz?</div>
       <div class="radio-group" id="lavozimGroup">
         <div class="radio-btn" data-value="Grammatika ustoz">📘 Grammatika ustoz</div>
         <div class="radio-btn" data-value="Pedmahorat ustoz">🎓 Pedmahorat ustoz</div>
       </div>
     </div>
 
-    <div class="section-title">Umumiy ma'lumot</div>
-    <div class="field">
-      <label>F.I.Sh.</label>
-      <input type="text" id="ism_sharif" required />
-    </div>
-    <div class="field">
-      <label>Tug'ilgan yili</label>
-      <input type="number" id="tugilgan_yili" min="1950" max="2010" placeholder="masalan: 1995" required />
-    </div>
-    <div class="field">
-      <label>Telefon raqami</label>
-      <input type="tel" id="telefon" placeholder="+998901234567" required />
-    </div>
-    <div class="field">
-      <label>Viloyat</label>
-      <select id="viloyat" required>
-        <option value="">Tanlang...</option>
-        <option>Toshkent shahri</option>
-        <option>Toshkent viloyati</option>
-        <option>Andijon</option>
-        <option>Farg'ona</option>
-        <option>Namangan</option>
-        <option>Sirdaryo</option>
-        <option>Jizzax</option>
-        <option>Samarqand</option>
-        <option>Buxoro</option>
-        <option>Navoiy</option>
-        <option>Qashqadaryo</option>
-        <option>Surxondaryo</option>
-        <option>Xorazm</option>
-        <option>Qoraqalpog'iston</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Tuman / mahalla (ixtiyoriy)</label>
-      <input type="text" id="yashash_joyi" />
-    </div>
-    <div class="field">
-      <label>Ta'lim (OTM, yo'nalish, bitirgan yili)</label>
-      <textarea id="talim" required></textarea>
-    </div>
-
-    <div class="section-title">Malaka ko'rsatkichlari</div>
-    <div class="field">
-      <label>ATT (attestatsiya) balli</label>
-      <input type="number" id="att_ball" min="0" max="100" required />
-    </div>
-    <div class="field">
-      <label>ATT toifasi</label>
-      <select id="att_daraja" required>
-        <option value="">Tanlang...</option>
-        <option>Oliy toifa</option>
-        <option>1-toifa</option>
-        <option>2-toifa</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Milliy Sertifikat darajasi</label>
-      <select id="milliy_sertifikat_daraja" required>
-        <option value="">Tanlang...</option>
-        <option>A+</option>
-        <option>A</option>
-        <option>B+</option>
-        <option>B</option>
-        <option>C+</option>
-        <option>C</option>
-      </select>
-    </div>
-
-    <div class="section-title">Ish tajribasi</div>
-    <div class="field">
-      <label>Ish tajribasi (yil)</label>
-      <input type="number" id="ish_tajribasi_yil" min="0" max="50" required />
-    </div>
-    <div class="field">
-      <label>Qayerda, qaysi yo'nalishda ishlagansiz</label>
-      <textarea id="tajriba" required></textarea>
-    </div>
-
-    <div id="pedagogikField" class="field hidden">
-      <label>Pedagogik kasb standarti bo'yicha 15 banddan nechtasi bo'yicha ishlagansiz?</label>
-      <input type="number" id="pedagogik_standart" min="0" max="15" placeholder="masalan: 14" />
-    </div>
-
-    <div class="section-title">Texnik ko'nikmalar</div>
-    <div class="field">
-      <label>Google Meet/Zoom orqali dars o'tgan tajribangiz</label>
-      <textarea id="zoom_meet_tajriba" required></textarea>
-    </div>
-    <div class="field">
-      <label>Telegram guruh/kanal orqali ishlagan tajribangiz</label>
-      <textarea id="telegram_tajriba" required></textarea>
-    </div>
-    <div class="field">
-      <label>YouTube orqali videodars joylagan tajribangiz</label>
-      <textarea id="youtube_tajriba" required></textarea>
-    </div>
-    <div class="field">
-      <label>Haftada nechta kun ishlashga tayyorsiz</label>
-      <div class="toggle-group" id="kunGroup">
-        <div class="toggle-btn" data-value="2 kun">2 kun</div>
-        <div class="toggle-btn" data-value="3 kun">3 kun</div>
+    <!-- Step 1: Umumiy ma'lumot -->
+    <div class="step" data-step="1">
+      <div class="step-title">Umumiy ma'lumot</div>
+      <div class="field">
+        <label>F.I.Sh.</label>
+        <input type="text" id="ism_sharif" required />
+      </div>
+      <div class="field">
+        <label>Tug'ilgan yili</label>
+        <input type="number" id="tugilgan_yili" min="1950" max="2010" placeholder="masalan: 1995" required />
+      </div>
+      <div class="field">
+        <label>Telefon raqami</label>
+        <input type="tel" id="telefon" placeholder="+998901234567" required />
+      </div>
+      <div class="field">
+        <label>Viloyat</label>
+        <select id="viloyat" required>
+          <option value="">Tanlang...</option>
+          <option>Toshkent shahri</option>
+          <option>Toshkent viloyati</option>
+          <option>Andijon</option>
+          <option>Farg'ona</option>
+          <option>Namangan</option>
+          <option>Sirdaryo</option>
+          <option>Jizzax</option>
+          <option>Samarqand</option>
+          <option>Buxoro</option>
+          <option>Navoiy</option>
+          <option>Qashqadaryo</option>
+          <option>Surxondaryo</option>
+          <option>Xorazm</option>
+          <option>Qoraqalpog'iston</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tuman / mahalla (ixtiyoriy)</label>
+        <input type="text" id="yashash_joyi" />
+      </div>
+      <div class="field">
+        <label>Ta'lim (OTM, yo'nalish, bitirgan yili)</label>
+        <textarea id="talim" required></textarea>
       </div>
     </div>
 
-    <div class="error" id="errorMsg">Iltimos, barcha maydonlarni to'ldiring.</div>
+    <!-- Step 2: Malaka ko'rsatkichlari -->
+    <div class="step" data-step="2">
+      <div class="step-title">Malaka ko'rsatkichlari</div>
+      <div class="field">
+        <label>ATT (attestatsiya) balli</label>
+        <input type="number" id="att_ball" min="0" max="100" required />
+      </div>
+      <div class="field">
+        <label>ATT toifasi</label>
+        <select id="att_daraja" required>
+          <option value="">Tanlang...</option>
+          <option>Oliy toifa</option>
+          <option>1-toifa</option>
+          <option>2-toifa</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Milliy Sertifikat darajasi</label>
+        <select id="milliy_sertifikat_daraja" required>
+          <option value="">Tanlang...</option>
+          <option>A+</option>
+          <option>A</option>
+          <option>B+</option>
+          <option>B</option>
+          <option>C+</option>
+          <option>C</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 3: Ish tajribasi -->
+    <div class="step" data-step="3">
+      <div class="step-title">Ish tajribasi</div>
+      <div class="field">
+        <label>Ish tajribasi (yil)</label>
+        <input type="number" id="ish_tajribasi_yil" min="0" max="50" required />
+      </div>
+      <div class="field">
+        <label>Qayerda, qaysi yo'nalishda ishlagansiz</label>
+        <textarea id="tajriba" required></textarea>
+      </div>
+      <div id="pedagogikField" class="field hidden">
+        <label>Pedagogik kasb standarti bo'yicha 15 banddan nechtasi bo'yicha ishlagansiz?</label>
+        <input type="number" id="pedagogik_standart" min="0" max="15" placeholder="masalan: 14" />
+      </div>
+    </div>
+
+    <!-- Step 4: Texnik ko'nikmalar -->
+    <div class="step" data-step="4">
+      <div class="step-title">Texnik ko'nikmalar</div>
+      <div class="field">
+        <label>Google Meet/Zoom orqali dars o'tgan tajribangiz</label>
+        <textarea id="zoom_meet_tajriba" required></textarea>
+      </div>
+      <div class="field">
+        <label>Telegram guruh/kanal orqali ishlagan tajribangiz</label>
+        <textarea id="telegram_tajriba" required></textarea>
+      </div>
+      <div class="field">
+        <label>YouTube orqali videodars joylagan tajribangiz</label>
+        <textarea id="youtube_tajriba" required></textarea>
+      </div>
+      <div class="field">
+        <label>Haftada nechta kun ishlashga tayyorsiz</label>
+        <div class="toggle-group" id="kunGroup">
+          <div class="toggle-btn" data-value="2 kun">2 kun</div>
+          <div class="toggle-btn" data-value="3 kun">3 kun</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Tasdiqlash -->
+    <div class="step" data-step="5">
+      <div class="step-title">Tekshirib chiqing</div>
+      <div id="summaryBox"></div>
+      <p class="hint" style="margin-top:14px;">"Yuborish" tugmasini bossangiz, bot chatda davom etadi — u yerda ATT/Milliy Sertifikat skrinshotlarini, namunaviy video va testni yuborasiz.</p>
+    </div>
+
+    <div class="error" id="errorMsg"></div>
   </form>
 
-  <button type="button" id="submitBtn">Yuborish va davom etish</button>
+  <div class="nav-btns">
+    <button type="button" class="btn-secondary" id="backBtn">Orqaga</button>
+    <button type="button" class="btn-primary" id="nextBtn">Davom etish</button>
+  </div>
 
   <script>
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) { tg.expand(); tg.ready(); }
+
+    const TOTAL_STEPS = 6;
+    let current = 0;
+
+    const steps = Array.from(document.querySelectorAll('.step'));
+    const progress = document.getElementById('progress');
+    for (let i = 0; i < TOTAL_STEPS; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      progress.appendChild(dot);
+    }
 
     function setupGroup(groupId) {
       const group = document.getElementById(groupId);
@@ -220,22 +251,38 @@
       return el ? el.dataset.value : null;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
-      const form = document.getElementById('arizaForm');
-      const lavozim = getActive('lavozimGroup');
-      const haftalik_kun = getActive('kunGroup');
-      const errorMsg = document.getElementById('errorMsg');
+    function showError(msg) {
+      const e = document.getElementById('errorMsg');
+      e.textContent = msg;
+      e.style.display = 'block';
+    }
+    function clearError() {
+      document.getElementById('errorMsg').style.display = 'none';
+    }
 
-      if (!lavozim || !haftalik_kun || !form.checkValidity()) {
-        form.reportValidity();
-        if (!lavozim) { errorMsg.textContent = "Iltimos, lavozimni tanlang."; errorMsg.style.display = 'block'; }
-        else if (!haftalik_kun) { errorMsg.textContent = "Iltimos, haftalik kunni tanlang."; errorMsg.style.display = 'block'; }
-        return;
+    function validateStep(stepIndex) {
+      if (stepIndex === 0) {
+        if (!getActive('lavozimGroup')) { showError('Iltimos, lavozimni tanlang.'); return false; }
+      } else if (stepIndex === 4) {
+        if (!getActive('kunGroup')) { showError('Iltimos, haftalik kunni tanlang.'); return false; }
+        const stepEl = steps.find((s) => s.dataset.step == stepIndex);
+        const inputs = stepEl.querySelectorAll('textarea[required], input[required], select[required]');
+        for (const el of inputs) { if (!el.checkValidity()) { el.reportValidity(); return false; } }
+      } else {
+        const stepEl = steps.find((s) => s.dataset.step == stepIndex);
+        const inputs = stepEl.querySelectorAll('textarea[required], input[required], select[required]');
+        for (const el of inputs) {
+          if (el.offsetParent === null) continue; // yashiringan maydonlarni o'tkazib yuborish
+          if (!el.checkValidity()) { el.reportValidity(); return false; }
+        }
       }
-      errorMsg.style.display = 'none';
+      clearError();
+      return true;
+    }
 
-      const data = {
-        lavozim,
+    function collectData() {
+      return {
+        lavozim: getActive('lavozimGroup'),
         ism_sharif: document.getElementById('ism_sharif').value.trim(),
         tugilgan_yili: document.getElementById('tugilgan_yili').value.trim(),
         telefon: document.getElementById('telefon').value.trim(),
@@ -251,9 +298,46 @@
         zoom_meet_tajriba: document.getElementById('zoom_meet_tajriba').value.trim(),
         telegram_tajriba: document.getElementById('telegram_tajriba').value.trim(),
         youtube_tajriba: document.getElementById('youtube_tajriba').value.trim(),
-        haftalik_kun,
+        haftalik_kun: getActive('kunGroup'),
       };
+    }
 
+    function renderSummary() {
+      const d = collectData();
+      const rows = [
+        ['Lavozim', d.lavozim], ["F.I.Sh.", d.ism_sharif], ["Tug'ilgan yili", d.tugilgan_yili],
+        ['Telefon', d.telefon], ['Viloyat', d.viloyat], ["Ta'lim", d.talim],
+        ['ATT', `${d.att_ball} ball, ${d.att_daraja}`], ['Milliy Sertifikat', d.milliy_sertifikat_daraja],
+        ['Ish tajribasi', `${d.ish_tajribasi_yil} yil`], ['Haftalik kun', d.haftalik_kun],
+      ];
+      document.getElementById('summaryBox').innerHTML = rows
+        .map(([k, v]) => `<div class="summary-row"><div class="k">${k}</div><div>${v || '—'}</div></div>`)
+        .join('');
+    }
+
+    function updateUI() {
+      steps.forEach((s) => s.classList.toggle('active', s.dataset.step == current));
+      Array.from(progress.children).forEach((dot, i) => dot.classList.toggle('done', i <= current));
+      document.getElementById('backBtn').style.visibility = current === 0 ? 'hidden' : 'visible';
+      document.getElementById('nextBtn').textContent = current === TOTAL_STEPS - 1 ? 'Yuborish' : 'Davom etish';
+      if (current === TOTAL_STEPS - 1) renderSummary();
+      window.scrollTo(0, 0);
+    }
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      clearError();
+      if (current > 0) { current -= 1; updateUI(); }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (!validateStep(current)) return;
+      if (current < TOTAL_STEPS - 1) {
+        current += 1;
+        updateUI();
+        return;
+      }
+      // Yakuniy qadam — yuborish
+      const data = collectData();
       if (tg) {
         tg.sendData(JSON.stringify(data));
         tg.close();
@@ -261,6 +345,8 @@
         alert('Bu sahifa faqat Telegram ichida ishlaydi.');
       }
     });
+
+    updateUI();
   </script>
 </body>
 </html>
