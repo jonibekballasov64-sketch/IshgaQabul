@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ariza tafsilotlari</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; padding:20px; background:#f4f5f7; color:#1a1a1a; }
+  a.back { color:#2481cc; text-decoration:none; font-size:13px; }
+  h1 { font-size: 18px; margin: 10px 0 16px; }
+  .card { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .row { display:flex; padding:8px 0; border-bottom:1px solid #f0f0f0; font-size:14px; }
+  .row .k { width:220px; color:#666; flex-shrink:0; }
+  .row .v { flex:1; white-space:pre-wrap; }
+  img.ss { max-width: 240px; border-radius:8px; margin-top:6px; display:block; }
+</style>
+</head>
+<body>
+  <a class="back" href="javascript:history.back()">&larr; Orqaga</a>
+  <h1 id="title">Yuklanmoqda...</h1>
+  <div class="card" id="content"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const key = params.get('key') || '';
+
+    function row(label, value) {
+      return `<div class="row"><div class="k">${label}</div><div class="v">${value || '—'}</div></div>`;
+    }
+
+    async function load() {
+      const res = await fetch(`/api/applications/${id}`, { headers: { 'X-Admin-Key': key } });
+      if (!res.ok) { document.getElementById('content').textContent = 'Topilmadi yoki kirish rad etildi.'; return; }
+      const a = await res.json();
+      document.getElementById('title').textContent = `#${a.id} — ${a.ism_sharif || 'nomsiz'}`;
+      let html = '';
+      html += row('Lavozim', a.lavozim);
+      html += row("F.I.Sh.", a.ism_sharif);
+      html += row("Tug'ilgan yili", a.tugilgan_yili);
+      html += row('Telefon', a.telefon);
+      html += row('Viloyat', a.viloyat);
+      html += row('Tuman/manzil', a.yashash_joyi);
+      html += row("Ta'lim", a.talim);
+      html += row('ATT ball / toifa', `${a.att_ball || ''} / ${a.att_daraja || ''}`);
+      html += row('Milliy Sertifikat', a.milliy_sertifikat_daraja);
+      html += row('Ish tajribasi', `${a.ish_tajribasi_yil || ''} yil — ${a.tajriba || ''}`);
+      html += row('Pedagogik standart', a.pedagogik_standart);
+      html += row('Zoom/Meet tajribasi', a.zoom_meet_tajriba);
+      html += row('Telegram tajribasi', a.telegram_tajriba);
+      html += row('YouTube tajribasi', a.youtube_tajriba);
+      html += row('Haftalik kun', a.haftalik_kun);
+      html += row('Namunaviy video', a.namunaviy_video_link || (a.namunaviy_video_file_id ? 'Video fayl (botda yuborilgan)' : null));
+      html += row('Namunaviy test', a.namunaviy_test);
+      html += row('Shartga rozilik', a.shartga_rozi === true ? 'Roziman' : a.shartga_rozi === false ? 'Rozi emas' : '—');
+      html += row('Holat', a.holat);
+      html += row('Sana', new Date(a.created_at).toLocaleString('uz-UZ'));
+
+      if (a.att_screenshot_file_id) {
+        html += row('ATT skrinshot', `<img class="ss" src="/api/photo/${a.att_screenshot_file_id}?key=${encodeURIComponent(key)}" />`);
+      }
+      if (a.milliy_sertifikat_screenshot_file_id) {
+        html += row('Milliy Sertifikat skrinshot', `<img class="ss" src="/api/photo/${a.milliy_sertifikat_screenshot_file_id}?key=${encodeURIComponent(key)}" />`);
+      }
+
+      document.getElementById('content').innerHTML = html;
+    }
+    load();
+  </script>
+</body>
+</html>

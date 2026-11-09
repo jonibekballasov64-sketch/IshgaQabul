@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ishga qabul — Admin</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 20px; background: #f4f5f7; color: #1a1a1a;
+  }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat-card {
+    background: #fff; border-radius: 10px; padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); min-width: 160px;
+  }
+  .stat-card .num { font-size: 24px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; color: #666; margin-top: 2px; }
+  .filters { margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters select, .filters input {
+    padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #eee; }
+  th { background: #fafafa; font-weight: 600; color: #444; }
+  tr:hover { background: #fafcff; }
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.tolaq { background: #e3f6e5; color: #1a7a2e; }
+  .badge.qisman { background: #fff3cd; color: #8a6400; }
+  .badge.boshlangan { background: #f0f0f0; color: #777; }
+  a.detail-link { color: #2481cc; text-decoration: none; font-size: 12px; }
+  .photo-links a { margin-right: 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Ishga qabul — arizalar</h1>
+  <div class="stats" id="statsBox"></div>
+  <div class="filters">
+    <select id="filterLavozim">
+      <option value="">Barcha lavozimlar</option>
+      <option value="Grammatika ustoz">Grammatika ustoz</option>
+      <option value="Pedmahorat ustoz">Pedmahorat ustoz</option>
+    </select>
+    <select id="filterHolat">
+      <option value="">Barcha holatlar</option>
+      <option value="to'liq">To'liq</option>
+      <option value="matn_tugallangan">Qisman (matn tugallangan)</option>
+      <option value="boshlangan">Boshlangan</option>
+    </select>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Ism</th><th>Lavozim</th><th>Telefon</th><th>Viloyat</th>
+        <th>Tajriba</th><th>Holat</th><th>Sana</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <script>
+    const key = new URLSearchParams(location.search).get('key') || '';
+
+    function authFetch(url) {
+      return fetch(url, { headers: { 'X-Admin-Key': key } });
+    }
+
+    function holatBadge(holat) {
+      const cls = holat === "to'liq" ? 'tolaq' : holat === 'matn_tugallangan' ? 'qisman' : 'boshlangan';
+      const text = holat === "to'liq" ? "To'liq" : holat === 'matn_tugallangan' ? 'Qisman' : 'Boshlangan';
+      return `<span class="badge ${cls}">${text}</span>`;
+    }
+
+    async function loadStats() {
+      const res = await authFetch('/api/stats');
+      if (!res.ok) { document.body.innerHTML = '<p style="padding:20px">Kirish rad etildi. Havoladagi ?key= parametrini tekshiring.</p>'; return; }
+      const rows = await res.json();
+      const byLavozim = {};
+      rows.forEach((r) => {
+        byLavozim[r.lavozim] = byLavozim[r.lavozim] || { tolaq: 0, qisman: 0, jami: 0 };
+        const n = parseInt(r.soni, 10);
+        byLavozim[r.lavozim].jami += n;
+        if (r.holat === "to'liq") byLavozim[r.lavozim].tolaq += n;
+        else byLavozim[r.lavozim].qisman += n;
+      });
+      const box = document.getElementById('statsBox');
+      box.innerHTML = '';
+      Object.entries(byLavozim).forEach(([lavozim, s]) => {
+        box.innerHTML += `
+          <div class="stat-card">
+            <div class="num">${s.jami}</div>
+            <div class="label">${lavozim} — jami ariza</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">${s.tolaq}</div>
+            <div class="label">${lavozim} — to'liq to'ldirgan</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">${s.qisman}</div>
+            <div class="label">${lavozim} — qisman to'ldirgan</div>
+          </div>`;
+      });
+    }
+
+    async function loadTable() {
+      const lavozim = document.getElementById('filterLavozim').value;
+      const holat = document.getElementById('filterHolat').value;
+      const params = new URLSearchParams();
+      if (lavozim) params.set('lavozim', lavozim);
+      if (holat) params.set('holat', holat);
+      const res = await authFetch('/api/applications?' + params.toString());
+      if (!res.ok) return;
+      const rows = await res.json();
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = rows.map((r) => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.ism_sharif || '—'}</td>
+          <td>${r.lavozim || '—'}</td>
+          <td>${r.telefon || '—'}</td>
+          <td>${r.viloyat || '—'}</td>
+          <td>${r.ish_tajribasi_yil ? r.ish_tajribasi_yil + ' yil' : '—'}</td>
+          <td>${holatBadge(r.holat)}</td>
+          <td>${new Date(r.created_at).toLocaleString('uz-UZ')}</td>
+          <td><a class="detail-link" href="/admin/detail.html?id=${r.id}&key=${encodeURIComponent(key)}">Batafsil</a></td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('filterLavozim').addEventListener('change', loadTable);
+    document.getElementById('filterHolat').addEventListener('change', loadTable);
+
+    loadStats();
+    loadTable();
+  </script>
+</body>
+</html>
