@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS applications (
   att_screenshot_file_id TEXT,
   milliy_sertifikat_daraja TEXT,
   milliy_sertifikat_screenshot_file_id TEXT,
+  diploma_file_id TEXT,
   ish_tajribasi_yil TEXT,
   tajriba TEXT,
   pedagogik_standart TEXT,
@@ -59,15 +60,17 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS ms_photo_received BOOLEAN NOT 
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS video_received BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS test_received BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS diploma_file_id TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS diploma_received BOOLEAN NOT NULL DEFAULT false;
 `;
 
 async function migrate() {
   await pool.query(MIGRATION);
 }
 
-// Web App dan matnli ma'lumotlar kelganda yangi ariza yaratadi (yoki shu foydalanuvchining
-// hali to'liq tugallanmagan arizasini yangilaydi).
-async function upsertTextSubmission(telegram_user_id, telegram_username, data) {
+// Web App orqali matn + fayllar (ATT/Milliy Sertifikat skrinshot, diplom) bitta so'rovda keladi.
+// Nomzod maosh shartiga rozi bo'lgandan keyingina shu bosqichga yetib keladi.
+async function createApplicationWithFiles(telegram_user_id, telegram_username, data, fileIds) {
   const existing = await pool.query(
     `SELECT id FROM applications
      WHERE telegram_user_id = $1 AND holat != 'to''liq'
@@ -95,6 +98,10 @@ async function upsertTextSubmission(telegram_user_id, telegram_username, data) {
     haftalik_kun: data.haftalik_kun || null,
   };
 
+  const att_screenshot_file_id = fileIds.att_screenshot_file_id || null;
+  const milliy_sertifikat_screenshot_file_id = fileIds.milliy_sertifikat_screenshot_file_id || null;
+  const diploma_file_id = fileIds.diploma_file_id || null;
+
   if (existing.rows.length > 0) {
     const id = existing.rows[0].id;
     await pool.query(
@@ -104,14 +111,18 @@ async function upsertTextSubmission(telegram_user_id, telegram_username, data) {
         milliy_sertifikat_daraja=$11, ish_tajribasi_yil=$12, tajriba=$13,
         pedagogik_standart=$14, zoom_meet_tajriba=$15, telegram_tajriba=$16,
         youtube_tajriba=$17, haftalik_kun=$18, text_submitted=true,
-        holat='matn_tugallangan', updated_at=now()
-       WHERE id=$19`,
+        att_screenshot_file_id=$19, att_photo_received=true,
+        milliy_sertifikat_screenshot_file_id=$20, ms_photo_received=true,
+        diploma_file_id=$21, diploma_received=true,
+        shartga_rozi=true, holat='matn_tugallangan', updated_at=now()
+       WHERE id=$22`,
       [
         telegram_username, fields.lavozim, fields.ism_sharif, fields.tugilgan_yili, fields.telefon,
         fields.viloyat, fields.yashash_joyi, fields.talim, fields.att_ball, fields.att_daraja,
         fields.milliy_sertifikat_daraja, fields.ish_tajribasi_yil, fields.tajriba,
         fields.pedagogik_standart, fields.zoom_meet_tajriba, fields.telegram_tajriba,
-        fields.youtube_tajriba, fields.haftalik_kun, id,
+        fields.youtube_tajriba, fields.haftalik_kun,
+        att_screenshot_file_id, milliy_sertifikat_screenshot_file_id, diploma_file_id, id,
       ]
     );
     return id;
@@ -122,8 +133,14 @@ async function upsertTextSubmission(telegram_user_id, telegram_username, data) {
       telegram_user_id, telegram_username, lavozim, ism_sharif, tugilgan_yili, telefon,
       viloyat, yashash_joyi, talim, att_ball, att_daraja, milliy_sertifikat_daraja,
       ish_tajribasi_yil, tajriba, pedagogik_standart, zoom_meet_tajriba, telegram_tajriba,
-      youtube_tajriba, haftalik_kun, text_submitted, holat
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,true,'matn_tugallangan')
+      youtube_tajriba, haftalik_kun, text_submitted,
+      att_screenshot_file_id, att_photo_received,
+      milliy_sertifikat_screenshot_file_id, ms_photo_received,
+      diploma_file_id, diploma_received, shartga_rozi, holat
+    ) VALUES (
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,true,
+      $20,true,$21,true,$22,true,true,'matn_tugallangan'
+    )
     RETURNING id`,
     [
       telegram_user_id, telegram_username, fields.lavozim, fields.ism_sharif, fields.tugilgan_yili,
@@ -131,6 +148,7 @@ async function upsertTextSubmission(telegram_user_id, telegram_username, data) {
       fields.att_daraja, fields.milliy_sertifikat_daraja, fields.ish_tajribasi_yil, fields.tajriba,
       fields.pedagogik_standart, fields.zoom_meet_tajriba, fields.telegram_tajriba,
       fields.youtube_tajriba, fields.haftalik_kun,
+      att_screenshot_file_id, milliy_sertifikat_screenshot_file_id, diploma_file_id,
     ]
   );
   return result.rows[0].id;
@@ -206,7 +224,7 @@ async function listApplications({ lavozim, holat } = {}) {
 module.exports = {
   pool,
   migrate,
-  upsertTextSubmission,
+  createApplicationWithFiles,
   getApplication,
   getLatestOpenApplication,
   updateApplicationFields,

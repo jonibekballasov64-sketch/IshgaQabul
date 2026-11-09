@@ -1,63 +1,26 @@
-const { Scenes, Markup } = require('telegraf');
+const { Scenes } = require('telegraf');
 const { updateApplicationFields, finalizeApplication, getApplication } = require('../db');
 
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 
-function roziKeyboard() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('✅ Roziman', 'shart_rozi')],
-    [Markup.button.callback('❌ Rozi emasman', 'shart_norozi')],
-  ]);
-}
-
-// Bu scene faqat matnli ariza (Web App orqali) qabul qilingandan keyin ishga tushadi.
+// Bu scene Web App orqali matn + hujjatlar (skrinshot, diplom) allaqachon saqlangandan
+// keyin ishga tushadi. Bu yerda faqat namunaviy video va test so'raladi.
 // ctx.scene.enter('media-wizard', { applicationId }) orqali kiritiladi.
 const wizard = new Scenes.WizardScene(
   'media-wizard',
 
-  // Step 0: kirish — ATT skrinshot so'rash
+  // Step 0: kirish — namunaviy video so'rash
   async (ctx) => {
     ctx.wizard.state.applicationId = ctx.scene.state.applicationId;
     await ctx.reply(
-      "Ma'lumotlaringiz qabul qilindi! Endi hujjatlarni yuboring.\n\nATT natijangiz skrinshotini rasm sifatida yuboring:"
-    );
-    return ctx.wizard.next();
-  },
-
-  // Step 1: ATT skrinshot -> Milliy Sertifikat skrinshot
-  async (ctx) => {
-    if (!ctx.message || !ctx.message.photo) {
-      await ctx.reply("Iltimos, ATT natijasi skrinshotini rasm sifatida yuboring.");
-      return;
-    }
-    const photo = ctx.message.photo[ctx.message.photo.length - 1];
-    await updateApplicationFields(ctx.wizard.state.applicationId, {
-      att_screenshot_file_id: photo.file_id,
-      att_photo_received: true,
-    });
-    await ctx.reply("Milliy Sertifikat natijangiz skrinshotini yuboring (rasm sifatida):");
-    return ctx.wizard.next();
-  },
-
-  // Step 2: MS skrinshot -> namunaviy video
-  async (ctx) => {
-    if (!ctx.message || !ctx.message.photo) {
-      await ctx.reply("Iltimos, Milliy Sertifikat natijasi skrinshotini rasm sifatida yuboring.");
-      return;
-    }
-    const photo = ctx.message.photo[ctx.message.photo.length - 1];
-    await updateApplicationFields(ctx.wizard.state.applicationId, {
-      milliy_sertifikat_screenshot_file_id: photo.file_id,
-      ms_photo_received: true,
-    });
-    await ctx.reply(
-      "Endi \"bog'lovchi\" mavzusida tayyorlagan namunaviy videodarsingizni yuboring.\n\n" +
+      "Hujjatlaringiz qabul qilindi! Endi so'nggi bosqich.\n\n" +
+        "\"Bog'lovchi\" mavzusida tayyorlagan namunaviy videodarsingizni yuboring.\n\n" +
         "Video faylni to'g'ridan-to'g'ri shu yerga yuborishingiz mumkin, yoki YouTube havolasini yozing:"
     );
     return ctx.wizard.next();
   },
 
-  // Step 3: video (fayl yoki havola) -> namunaviy test
+  // Step 1: video (fayl yoki havola) -> namunaviy test
   async (ctx) => {
     const fields = { video_received: true };
     if (ctx.message && ctx.message.video) {
@@ -77,7 +40,7 @@ const wizard = new Scenes.WizardScene(
     return ctx.wizard.next();
   },
 
-  // Step 4: namunaviy test -> shartlar
+  // Step 2: namunaviy test -> yakunlash
   async (ctx) => {
     if (!ctx.message || !ctx.message.text) {
       await ctx.reply("Iltimos, namunaviy testingizni matn ko'rinishida yuboring.");
@@ -87,36 +50,10 @@ const wizard = new Scenes.WizardScene(
       namunaviy_test: ctx.message.text.trim(),
       test_received: true,
     });
-    await ctx.reply(
-      "Ish shartlari:\n\n" +
-        "• Oylik: boshlang'ich 800 000 so'm, natijaga qarab oyma-oy 1 200 000 so'mgacha oshib boradi\n" +
-        "• Jadval: haftada 3 kun (yoki 2 kun), har safar 1,5-2 soat\n" +
-        "• Format: Google Meet/Zoom, Telegram chat, YouTube orqali videodars\n\n" +
-        "Shu shartlarga rozimisiz?",
-      roziKeyboard()
-    );
-    return ctx.wizard.next();
-  },
 
-  // Step 5: shartga rozilik -> yakunlash
-  async (ctx) => {
-    if (!ctx.callbackQuery || !['shart_rozi', 'shart_norozi'].includes(ctx.callbackQuery.data)) {
-      await ctx.reply("Iltimos, tugmalardan birini tanlang.");
-      return;
-    }
-    const rozi = ctx.callbackQuery.data === 'shart_rozi';
-    await ctx.answerCbQuery();
     const id = ctx.wizard.state.applicationId;
-    await finalizeApplication(id, rozi);
-
-    if (!rozi) {
-      await ctx.editMessageText(
-        "Tushunarli. Qiziqish bildirganingiz uchun tashakkur. Shartlar o'zgarsa, qaytib murojaat qilishingiz mumkin."
-      );
-      return ctx.scene.leave();
-    }
-
-    await ctx.editMessageText("Rahmat! Arizangiz to'liq qabul qilindi. Tez orada siz bilan bog'lanishadi.");
+    await finalizeApplication(id, true);
+    await ctx.reply("Rahmat! Arizangiz to'liq qabul qilindi. Tez orada siz bilan bog'lanishadi.");
 
     const d = await getApplication(id);
     if (ADMIN_CHAT_ID && d) {
@@ -138,20 +75,11 @@ const wizard = new Scenes.WizardScene(
         `Haftalik kun: ${d.haftalik_kun}\n` +
         (d.namunaviy_video_link ? `Namunaviy video: ${d.namunaviy_video_link}\n` : '') +
         `\nNamunaviy test:\n${d.namunaviy_test}\n\n` +
-        `Telegram: ${d.telegram_username || "username yo'q"} (id: ${d.telegram_user_id})`;
+        `Telegram: ${d.telegram_username || "username yo'q"} (id: ${d.telegram_user_id})\n\n` +
+        `ATT/Milliy Sertifikat skrinshot va diplom yuqorida alohida yuborilgan edi.`;
 
       try {
         await ctx.telegram.sendMessage(ADMIN_CHAT_ID, summary);
-        if (d.att_screenshot_file_id) {
-          await ctx.telegram.sendPhoto(ADMIN_CHAT_ID, d.att_screenshot_file_id, {
-            caption: `ATT skrinshot — ariza #${d.id}`,
-          });
-        }
-        if (d.milliy_sertifikat_screenshot_file_id) {
-          await ctx.telegram.sendPhoto(ADMIN_CHAT_ID, d.milliy_sertifikat_screenshot_file_id, {
-            caption: `Milliy Sertifikat skrinshot — ariza #${d.id}`,
-          });
-        }
         if (d.namunaviy_video_file_id) {
           await ctx.telegram.sendVideo(ADMIN_CHAT_ID, d.namunaviy_video_file_id, {
             caption: `Namunaviy videodars — ariza #${d.id}`,

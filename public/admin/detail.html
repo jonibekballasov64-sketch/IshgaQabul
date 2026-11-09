@@ -21,6 +21,11 @@
   .row .k { width: 190px; flex-shrink: 0; color: var(--muted); font-weight: 600; font-size: 13px; }
   .row .v { flex: 1; white-space: pre-wrap; color: var(--ink); }
   img.ss { max-width: 260px; border-radius: var(--radius-sm); margin-top: 6px; display: block; border: 1px solid var(--border); }
+  a.file-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--brand); text-decoration: none; font-weight: 700; font-size: 13.5px;
+    background: var(--brand-tint); padding: 8px 12px; border-radius: var(--radius-sm);
+  }
 </style>
 </head>
 <body>
@@ -65,11 +70,18 @@
       html += row('Holat', a.holat);
       html += row('Sana', new Date(a.created_at).toLocaleString('uz-UZ'));
 
+      function fileLink(fileId) {
+        return `<a class="file-link" href="/api/photo/${fileId}?key=${encodeURIComponent(key)}" target="_blank" rel="noopener">📎 Faylni ko'rish</a>`;
+      }
+
       if (a.att_screenshot_file_id) {
-        html += row('ATT skrinshot', `<img class="ss" src="/api/photo/${a.att_screenshot_file_id}?key=${encodeURIComponent(key)}" />`);
+        html += row('ATT skrinshot', fileLink(a.att_screenshot_file_id));
       }
       if (a.milliy_sertifikat_screenshot_file_id) {
-        html += row('Milliy Sertifikat skrinshot', `<img class="ss" src="/api/photo/${a.milliy_sertifikat_screenshot_file_id}?key=${encodeURIComponent(key)}" />`);
+        html += row('Milliy Sertifikat skrinshot', fileLink(a.milliy_sertifikat_screenshot_file_id));
+      }
+      if (a.diploma_file_id) {
+        html += row('Diplom', fileLink(a.diploma_file_id));
       }
 
       document.getElementById('content').innerHTML = html;

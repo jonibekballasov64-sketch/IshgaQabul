@@ -1,16 +1,20 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
+const multer = require('multer');
 const { Telegraf, Scenes, session, Markup } = require('telegraf');
 const {
   migrate,
   listRecentApplications,
-  upsertTextSubmission,
+  createApplicationWithFiles,
   getStats,
   listApplications,
   getApplication,
 } = require('./db');
+const { validateInitData } = require('./telegramAuth');
 const mediaWizard = require('./scenes/mediaWizard');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
@@ -83,13 +87,13 @@ bot.command('admin', async (ctx) => {
   await ctx.reply('Admin panel:', adminKeyboard());
 });
 
-// Web App dan matnli ariza ma'lumotlari keladi
+// Web App formasi (matn + fayllar) /api/webapp-submit orqali allaqachon saqlangan —
+// bu yerda faqat ariza ID kelib, bot suhbatda davom etadi (video + test so'raladi).
 bot.on('message', async (ctx, next) => {
   if (ctx.message && ctx.message.web_app_data) {
     try {
-      const data = JSON.parse(ctx.message.web_app_data.data);
-      const username = ctx.from.username ? `@${ctx.from.username}` : null;
-      const applicationId = await upsertTextSubmission(ctx.from.id, username, data);
+      const { applicationId } = JSON.parse(ctx.message.web_app_data.data);
+      if (!applicationId) throw new Error('applicationId yo\'q');
       return ctx.scene.enter('media-wizard', { applicationId });
     } catch (err) {
       console.error('Web App ma\'lumotini qayta ishlashda xatolik:', err);
@@ -161,6 +165,68 @@ async function main() {
     if (!row) return res.status(404).json({ error: 'not_found' });
     res.json(row);
   });
+
+  // Web App formasi: matn maydonlari + ATT/Milliy Sertifikat skrinshot + diplom (rasm yoki PDF)
+  app.post(
+    '/api/webapp-submit',
+    upload.fields([
+      { name: 'att_screenshot', maxCount: 1 },
+      { name: 'milliy_sertifikat_screenshot', maxCount: 1 },
+      { name: 'diploma', maxCount: 1 },
+    ]),
+    async (req, res) => {
+      const { initData, data } = req.body;
+      const auth = validateInitData(initData, BOT_TOKEN);
+      if (!auth.ok) {
+        return res.status(401).json({ error: 'invalid_init_data' });
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(data);
+      } catch (err) {
+        return res.status(400).json({ error: 'bad_data' });
+      }
+
+      const username = auth.user.username ? `@${auth.user.username}` : null;
+      const files = req.files || {};
+
+      async function uploadToAdmin(fieldName, label) {
+        const file = files[fieldName] && files[fieldName][0];
+        if (!file || !ADMIN_CHAT_ID) return null;
+        try {
+          const sent = await bot.telegram.sendDocument(
+            ADMIN_CHAT_ID,
+            { source: file.buffer, filename: file.originalname || `${fieldName}.jpg` },
+            { caption: `${label} — ${parsed.ism_sharif || 'nomzod'} (yuklanmoqda)` }
+          );
+          return sent.document ? sent.document.file_id : null;
+        } catch (err) {
+          console.error(`${fieldName} ni yuklashda xatolik:`, err);
+          return null;
+        }
+      }
+
+      try {
+        const [attFileId, msFileId, diplomaFileId] = await Promise.all([
+          uploadToAdmin('att_screenshot', 'ATT skrinshot'),
+          uploadToAdmin('milliy_sertifikat_screenshot', 'Milliy Sertifikat skrinshot'),
+          uploadToAdmin('diploma', 'Diplom'),
+        ]);
+
+        const applicationId = await createApplicationWithFiles(auth.user.id, username, parsed, {
+          att_screenshot_file_id: attFileId,
+          milliy_sertifikat_screenshot_file_id: msFileId,
+          diploma_file_id: diplomaFileId,
+        });
+
+        res.json({ applicationId });
+      } catch (err) {
+        console.error('Arizani saqlashda xatolik:', err);
+        res.status(500).json({ error: 'server_error' });
+      }
+    }
+  );
 
   // Telegramda saqlangan skrinshotni admin panelda ko'rsatish uchun proksi
   app.get('/api/photo/:fileId', checkAdminKey, async (req, res) => {
