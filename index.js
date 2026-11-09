@@ -48,7 +48,7 @@ function startKeyboard() {
 function adminKeyboard() {
   if (ADMIN_PANEL_URL) {
     return Markup.inlineKeyboard([
-      [Markup.button.url('📊 Admin panelni ochish', ADMIN_PANEL_URL)],
+      [Markup.button.webApp('📊 Admin panelni ochish', ADMIN_PANEL_URL)],
     ]);
   }
   return undefined;
