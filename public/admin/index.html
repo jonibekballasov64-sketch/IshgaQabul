@@ -3,40 +3,55 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ishga qabul — Admin</title>
+<title>Admin — Nargiza Olimovna akademiyasi</title>
+<link rel="stylesheet" href="/shared.css" />
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    margin: 0; padding: 20px; background: #f4f5f7; color: #1a1a1a;
-  }
-  h1 { font-size: 20px; margin: 0 0 16px; }
-  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  body { padding: 20px 16px 40px; }
+
+  .masthead { margin-bottom: 20px; }
+  .masthead .eyebrow { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: 0.02em; margin-bottom: 4px; }
+  .masthead h1 { font-size: 20px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
   .stat-card {
-    background: #fff; border-radius: 10px; padding: 14px 18px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08); min-width: 160px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--shadow);
   }
-  .stat-card .num { font-size: 24px; font-weight: 700; }
-  .stat-card .label { font-size: 12px; color: #666; margin-top: 2px; }
+  .stat-card .num { font-family: 'Lora', serif; font-size: 26px; font-weight: 700; color: var(--brand-dark); }
+  .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+
   .filters { margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .filters select, .filters input {
-    padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;
+  .filters select {
+    padding: 9px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+    font-size: 13.5px; font-family: inherit; background: var(--surface); color: var(--ink);
   }
-  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
-  th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #eee; }
-  th { background: #fafafa; font-weight: 600; color: #444; }
-  tr:hover { background: #fafcff; }
-  .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .badge.tolaq { background: #e3f6e5; color: #1a7a2e; }
-  .badge.qisman { background: #fff3cd; color: #8a6400; }
-  .badge.boshlangan { background: #f0f0f0; color: #777; }
-  a.detail-link { color: #2481cc; text-decoration: none; font-size: 12px; }
-  .photo-links a { margin-right: 6px; font-size: 12px; }
+
+  .table-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  th {
+    background: var(--brand-tint); color: var(--brand-dark); font-weight: 700;
+    font-size: 11.5px; letter-spacing: 0.02em;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafaf7; }
+  a.detail-link {
+    color: var(--brand); text-decoration: none; font-size: 12.5px; font-weight: 700;
+  }
+  .empty-state { padding: 30px; text-align: center; color: var(--muted); font-size: 13.5px; }
 </style>
 </head>
 <body>
-  <h1>Ishga qabul — arizalar</h1>
+  <div class="masthead">
+    <div class="eyebrow">Admin panel</div>
+    <h1>Ishga qabul — arizalar</h1>
+  </div>
+
   <div class="stats" id="statsBox"></div>
+
   <div class="filters">
     <select id="filterLavozim">
       <option value="">Barcha lavozimlar</option>
@@ -50,15 +65,21 @@
       <option value="boshlangan">Boshlangan</option>
     </select>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th><th>Ism</th><th>Lavozim</th><th>Telefon</th><th>Viloyat</th>
-        <th>Tajriba</th><th>Holat</th><th>Sana</th><th></th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Ism</th><th>Lavozim</th><th>Telefon</th><th>Viloyat</th>
+          <th>Tajriba</th><th>Holat</th><th>Sana</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state hidden" id="emptyState">Hozircha arizalar yo'q.</div>
+  </div>
+
+  <div class="brand-footer">Nargiza Olimovna akademiyasi</div>
 
   <script>
     const key = new URLSearchParams(location.search).get('key') || '';
@@ -68,14 +89,17 @@
     }
 
     function holatBadge(holat) {
-      const cls = holat === "to'liq" ? 'tolaq' : holat === 'matn_tugallangan' ? 'qisman' : 'boshlangan';
+      const cls = holat === "to'liq" ? 'badge-success' : holat === 'matn_tugallangan' ? 'badge-amber' : 'badge-muted';
       const text = holat === "to'liq" ? "To'liq" : holat === 'matn_tugallangan' ? 'Qisman' : 'Boshlangan';
       return `<span class="badge ${cls}">${text}</span>`;
     }
 
     async function loadStats() {
       const res = await authFetch('/api/stats');
-      if (!res.ok) { document.body.innerHTML = '<p style="padding:20px">Kirish rad etildi. Havoladagi ?key= parametrini tekshiring.</p>'; return; }
+      if (!res.ok) {
+        document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7280;font-family:Manrope,sans-serif">Kirish rad etildi. Havoladagi <code>?key=</code> parametrini tekshiring.</div>';
+        return;
+      }
       const rows = await res.json();
       const byLavozim = {};
       rows.forEach((r) => {
@@ -89,19 +113,13 @@
       box.innerHTML = '';
       Object.entries(byLavozim).forEach(([lavozim, s]) => {
         box.innerHTML += `
-          <div class="stat-card">
-            <div class="num">${s.jami}</div>
-            <div class="label">${lavozim} — jami ariza</div>
-          </div>
-          <div class="stat-card">
-            <div class="num">${s.tolaq}</div>
-            <div class="label">${lavozim} — to'liq to'ldirgan</div>
-          </div>
-          <div class="stat-card">
-            <div class="num">${s.qisman}</div>
-            <div class="label">${lavozim} — qisman to'ldirgan</div>
-          </div>`;
+          <div class="stat-card"><div class="num">${s.jami}</div><div class="label">${lavozim}<br>jami ariza</div></div>
+          <div class="stat-card"><div class="num">${s.tolaq}</div><div class="label">${lavozim}<br>to'liq to'ldirgan</div></div>
+          <div class="stat-card"><div class="num">${s.qisman}</div><div class="label">${lavozim}<br>qisman to'ldirgan</div></div>`;
       });
+      if (Object.keys(byLavozim).length === 0) {
+        box.innerHTML = '<div class="stat-card"><div class="num">0</div><div class="label">Hozircha arizalar yo\'q</div></div>';
+      }
     }
 
     async function loadTable() {
@@ -114,6 +132,13 @@
       if (!res.ok) return;
       const rows = await res.json();
       const tbody = document.getElementById('tableBody');
+      const empty = document.getElementById('emptyState');
+      if (rows.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
       tbody.innerHTML = rows.map((r) => `
         <tr>
           <td>${r.id}</td>
@@ -123,8 +148,8 @@
           <td>${r.viloyat || '—'}</td>
           <td>${r.ish_tajribasi_yil ? r.ish_tajribasi_yil + ' yil' : '—'}</td>
           <td>${holatBadge(r.holat)}</td>
-          <td>${new Date(r.created_at).toLocaleString('uz-UZ')}</td>
-          <td><a class="detail-link" href="/admin/detail.html?id=${r.id}&key=${encodeURIComponent(key)}">Batafsil</a></td>
+          <td>${new Date(r.created_at).toLocaleDateString('uz-UZ')}</td>
+          <td><a class="detail-link" href="/admin/detail.html?id=${r.id}&key=${encodeURIComponent(key)}">Batafsil →</a></td>
         </tr>
       `).join('');
     }

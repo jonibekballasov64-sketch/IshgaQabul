@@ -1,0 +1,97 @@
+/* Nargiza Olimovna akademiyasi — Ishga qabul: umumiy uslub */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --ink: #171a24;
+  --ink-soft: #4b5166;
+  --muted: #868ca3;
+  --brand: #2b3a67;
+  --brand-dark: #1c2748;
+  --brand-tint: #e9ecf6;
+  --gold: #c08a2e;
+  --gold-soft: #f3e4c8;
+  --paper: #f3f2ec;
+  --surface: #ffffff;
+  --border: #e4e2d9;
+  --success: #2f7d4f;
+  --success-tint: #e2f1e6;
+  --amber: #b4780f;
+  --amber-tint: #faf0dc;
+  --danger: #b1402e;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(23, 26, 36, 0.04), 0 8px 24px -12px rgba(23, 26, 36, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .serif {
+  font-family: 'Lora', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--brand-dark);
+  margin: 0;
+}
+
+a { color: var(--brand); }
+
+.brand-footer {
+  text-align: center;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  padding: 14px 0 6px;
+}
+.brand-footer::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 2px;
+  background: var(--gold);
+  margin: 0 auto 10px;
+  border-radius: 2px;
+}
+
+button { font-family: inherit; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, opacity .15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:disabled { opacity: .45; cursor: default; }
+.btn-ghost { background: transparent; color: var(--brand); border: 1px solid var(--border); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.badge-success { background: var(--success-tint); color: var(--success); }
+.badge-amber { background: var(--amber-tint); color: var(--amber); }
+.badge-muted { background: var(--brand-tint); color: var(--brand); }
