@@ -69,6 +69,7 @@ const wizard = new Scenes.WizardScene(
         `Milliy Sertifikat: ${d.milliy_sertifikat_daraja}\n` +
         `Ish tajribasi: ${d.ish_tajribasi_yil} yil — ${d.tajriba}\n` +
         (d.pedagogik_standart ? `Pedagogik standart: ${d.pedagogik_standart}\n` : '') +
+        `Zoom/Meet/YouTube'da dars o'ta oladi: ${{ ha: 'Ha', yoq: "Yo'q", qisman: 'Qisman' }[d.onlayn_dars_otkazish] || d.onlayn_dars_otkazish}\n` +
         `Zoom/Meet: ${d.zoom_meet_tajriba}\n` +
         `Telegram: ${d.telegram_tajriba}\n` +
         `YouTube: ${d.youtube_tajriba}\n` +

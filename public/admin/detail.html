@@ -60,6 +60,7 @@
       html += row('Milliy Sertifikat', a.milliy_sertifikat_daraja);
       html += row('Ish tajribasi', `${a.ish_tajribasi_yil || ''} yil — ${a.tajriba || ''}`);
       html += row('Pedagogik standart', a.pedagogik_standart);
+      html += row('Zoom/Meet/YouTube orqali dars o\'ta oladi?', { ha: 'Ha', yoq: "Yo'q", qisman: 'Qisman' }[a.onlayn_dars_otkazish] || a.onlayn_dars_otkazish);
       html += row('Zoom/Meet tajribasi', a.zoom_meet_tajriba);
       html += row('Telegram tajribasi', a.telegram_tajriba);
       html += row('YouTube tajribasi', a.youtube_tajriba);

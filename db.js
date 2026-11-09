@@ -62,6 +62,7 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS test_received BOOLEAN NOT NULL
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS diploma_file_id TEXT;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS diploma_received BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS onlayn_dars_otkazish TEXT;
 `;
 
 async function migrate() {
@@ -95,6 +96,7 @@ async function createApplicationWithFiles(telegram_user_id, telegram_username, d
     zoom_meet_tajriba: data.zoom_meet_tajriba || null,
     telegram_tajriba: data.telegram_tajriba || null,
     youtube_tajriba: data.youtube_tajriba || null,
+    onlayn_dars_otkazish: data.onlayn_dars_otkazish || null,
     haftalik_kun: data.haftalik_kun || null,
   };
 
@@ -110,18 +112,18 @@ async function createApplicationWithFiles(telegram_user_id, telegram_username, d
         viloyat=$6, yashash_joyi=$7, talim=$8, att_ball=$9, att_daraja=$10,
         milliy_sertifikat_daraja=$11, ish_tajribasi_yil=$12, tajriba=$13,
         pedagogik_standart=$14, zoom_meet_tajriba=$15, telegram_tajriba=$16,
-        youtube_tajriba=$17, haftalik_kun=$18, text_submitted=true,
-        att_screenshot_file_id=$19, att_photo_received=true,
-        milliy_sertifikat_screenshot_file_id=$20, ms_photo_received=true,
-        diploma_file_id=$21, diploma_received=true,
+        youtube_tajriba=$17, onlayn_dars_otkazish=$18, haftalik_kun=$19, text_submitted=true,
+        att_screenshot_file_id=$20, att_photo_received=true,
+        milliy_sertifikat_screenshot_file_id=$21, ms_photo_received=true,
+        diploma_file_id=$22, diploma_received=true,
         shartga_rozi=true, holat='matn_tugallangan', updated_at=now()
-       WHERE id=$22`,
+       WHERE id=$23`,
       [
         telegram_username, fields.lavozim, fields.ism_sharif, fields.tugilgan_yili, fields.telefon,
         fields.viloyat, fields.yashash_joyi, fields.talim, fields.att_ball, fields.att_daraja,
         fields.milliy_sertifikat_daraja, fields.ish_tajribasi_yil, fields.tajriba,
         fields.pedagogik_standart, fields.zoom_meet_tajriba, fields.telegram_tajriba,
-        fields.youtube_tajriba, fields.haftalik_kun,
+        fields.youtube_tajriba, fields.onlayn_dars_otkazish, fields.haftalik_kun,
         att_screenshot_file_id, milliy_sertifikat_screenshot_file_id, diploma_file_id, id,
       ]
     );
@@ -133,13 +135,13 @@ async function createApplicationWithFiles(telegram_user_id, telegram_username, d
       telegram_user_id, telegram_username, lavozim, ism_sharif, tugilgan_yili, telefon,
       viloyat, yashash_joyi, talim, att_ball, att_daraja, milliy_sertifikat_daraja,
       ish_tajribasi_yil, tajriba, pedagogik_standart, zoom_meet_tajriba, telegram_tajriba,
-      youtube_tajriba, haftalik_kun, text_submitted,
+      youtube_tajriba, onlayn_dars_otkazish, haftalik_kun, text_submitted,
       att_screenshot_file_id, att_photo_received,
       milliy_sertifikat_screenshot_file_id, ms_photo_received,
       diploma_file_id, diploma_received, shartga_rozi, holat
     ) VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,true,
-      $20,true,$21,true,$22,true,true,'matn_tugallangan'
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,true,
+      $21,true,$22,true,$23,true,true,'matn_tugallangan'
     )
     RETURNING id`,
     [
@@ -147,7 +149,7 @@ async function createApplicationWithFiles(telegram_user_id, telegram_username, d
       fields.telefon, fields.viloyat, fields.yashash_joyi, fields.talim, fields.att_ball,
       fields.att_daraja, fields.milliy_sertifikat_daraja, fields.ish_tajribasi_yil, fields.tajriba,
       fields.pedagogik_standart, fields.zoom_meet_tajriba, fields.telegram_tajriba,
-      fields.youtube_tajriba, fields.haftalik_kun,
+      fields.youtube_tajriba, fields.onlayn_dars_otkazish, fields.haftalik_kun,
       att_screenshot_file_id, milliy_sertifikat_screenshot_file_id, diploma_file_id,
     ]
   );

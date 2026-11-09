@@ -297,6 +297,14 @@
         <!-- Step 5: Texnik ko'nikmalar -->
         <div class="step" data-step="5">
           <div class="field">
+            <label>Zoom, Google Meet, YouTube orqali dars o'ta olasizmi?</label>
+            <div class="toggle-group" id="onlaynGroup">
+              <div class="toggle-btn" data-value="ha">Ha</div>
+              <div class="toggle-btn" data-value="yoq">Yo'q</div>
+              <div class="toggle-btn" data-value="qisman">Qisman</div>
+            </div>
+          </div>
+          <div class="field">
             <label>Google Meet/Zoom orqali dars o'tgan tajribangiz</label>
             <textarea id="zoom_meet_tajriba" required></textarea>
           </div>
@@ -386,6 +394,7 @@
       }
     });
     setupGroup('roziGroup');
+    setupGroup('onlaynGroup');
     setupGroup('kunGroup');
 
     // Fayl tanlash maydonlari
@@ -434,6 +443,7 @@
       } else if (stepIndex === 1) {
         if (!getActive('roziGroup')) { showError('Iltimos, javobingizni tanlang.'); return false; }
       } else if (stepIndex === 5) {
+        if (!getActive('onlaynGroup')) { showError("Iltimos, Zoom/Meet/YouTube savoliga javob bering."); return false; }
         if (!getActive('kunGroup')) { showError('Iltimos, haftalik kunni tanlang.'); return false; }
         if (!requiredInputsOk(stepEl)) return false;
       } else {
@@ -461,6 +471,7 @@
         zoom_meet_tajriba: document.getElementById('zoom_meet_tajriba').value.trim(),
         telegram_tajriba: document.getElementById('telegram_tajriba').value.trim(),
         youtube_tajriba: document.getElementById('youtube_tajriba').value.trim(),
+        onlayn_dars_otkazish: getActive('onlaynGroup'),
         haftalik_kun: getActive('kunGroup'),
       };
     }

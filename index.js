@@ -40,20 +40,24 @@ function isAdmin(ctx) {
   return ADMIN_CHAT_ID && String(ctx.from.id) === String(ADMIN_CHAT_ID);
 }
 
+// Muhim: tg.sendData() faqat "Keyboard button" (pastki reply klaviatura) orqali
+// ochilgan Mini App'larda ishlaydi — inline tugma orqali ochilsa, forma
+// yuborilgandan keyin bot hech narsa olmaydi (Telegram cheklovi). Shuning uchun
+// webApp tugmalari inlineKeyboard emas, pastki reply-klaviatura sifatida beriladi.
 function startKeyboard() {
   if (WEBAPP_URL) {
-    return Markup.inlineKeyboard([
+    return Markup.keyboard([
       [Markup.button.webApp('📝 Arizani to\'ldirish', WEBAPP_URL)],
-    ]);
+    ]).resize();
   }
   return undefined;
 }
 
 function adminKeyboard() {
   if (ADMIN_PANEL_URL) {
-    return Markup.inlineKeyboard([
+    return Markup.keyboard([
       [Markup.button.webApp('📊 Admin panelni ochish', ADMIN_PANEL_URL)],
-    ]);
+    ]).resize();
   }
   return undefined;
 }
