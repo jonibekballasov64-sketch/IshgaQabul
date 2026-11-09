@@ -1,0 +1,15 @@
+{
+  "name": "ishgaqabul",
+  "version": "1.0.0",
+  "description": "Ishga qabul uchun Telegram bot — Grammatika va Pedmahorat ustoz lavozimlariga ariza qabul qilish",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "pg": "^8.13.1",
+    "express": "^4.21.2",
+    "dotenv": "^16.4.7"
+  }
+}
